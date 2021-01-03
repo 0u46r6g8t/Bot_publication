@@ -1,4 +1,6 @@
-./test
+../.test
+../.vscode/
+../__pycache__/
 
-###
+src/images/
 .pyc
