@@ -9,15 +9,18 @@ def receive_hours(bot):
 def verify_hours(bot):
     
     hour = receive_hours(bot)
+    c = 0
     hour = hour[1]
-    if(hour == "10:00" or hour == "20:00"):
+    if(((hour > "13:00:00" and hour < "13:00:10" ) or (hour > "20:00:00" and hour < "20:01:00" )) and (c == 0)):
+        c = 1
         return True
     else:
+        c = 0
         return False
 
 def sleep_pause():
 
-    for i in range(0,60):
+    for i in range(0,10):
         time.sleep(1)
 
 def banner(bot):
@@ -27,17 +30,6 @@ def banner(bot):
             \tPublicações do dia """ + str(receive_hours(bot)[0]) + """
     
 
-         \033[1;33m Todos os registros do dia serão exibidos aqui\033[1;31m.
-    
+         \033[1;33m Todos os registros do dia serão exibidos aqui\033[1;31m.    
     """)
 
-def message_bot(bot):
-
-    data = bot.getMessage()
-
-    for value in data:
-
-        if(value['status'] == 2):
-           print("     \033[0;0m[\033[1;32m!\033[0;0m] -> {0}".format(value['message']))
-        else:
-            print("    [\033[1;31m!\033[0;0m] -> {0}".format(value['message']))
