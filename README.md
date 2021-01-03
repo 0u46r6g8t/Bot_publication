@@ -1,7 +1,7 @@
 # Montagem do bot em passos:
 
 1. Irá receber as noticias por meio de uma api flask
-2. Todos os links serão enviados para o programa que irá salvar na tabela "links_not_publicated" 
+2. Todos os links serão enviados para o programa que irá salvar na tabela "publication_not_published" 
 3. O bot terá 2 horários programadas para realizar as publicações, sendo elas: 
 
 > 10:00 - Manhã.
