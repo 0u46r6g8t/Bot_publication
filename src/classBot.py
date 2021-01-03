@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ##################################################################################################
 ##################################################################################################
 ###
@@ -27,19 +28,15 @@ class Bot():
     class_phrases = []
     # Inicia a variaveis para realizar a comunicação com o banco de dados
 
-
     def __init__(self):
 
-        self.message = {}
-        self.id = ""
-        self.port = 3306
-        self.nameDB = 'bot_python'
-        self.password = 'Leontechh@15'
-        self.host = 'localhost'
+        self.data = ""
+        self.message = []
         self.page = '908493739185235'
         self.token = 'EAALVbVPZCmzUBAPk3xo2ZCEP1C2b4u2ykismIwOcja1tTFeVzQPhgGkSNQlA7s0kT02rZATWp9ydQ1m89nAtcJdKSiXLXtY0PTawARjFgDUPJkiptObAj8MLWnmrmInQKQjYle8lRGIBAdASlZB5ZAG8GBFt15V7i0ewFqGdpW50dy0gUXURkubsFvNDHAojWZBsOnGYzhmwZDZD'
         self.connection = mysql.connector.connect(host='localhost', user='root', password='Leontechh@15', database='bot_python') 
 
+    # Reponsável por retornar a data e hora
     def return_hours(self):
         try:
             dateNow = datetime.now()
@@ -48,15 +45,13 @@ class Bot():
 
             return dateNow
 
+        # Cases de erros
         except Exception as error:
 
-            self.message = {
-                "MessageError": "Erro ao retornar a hora",
-                "error": error
-            }
+            self.setMessage("Erro ao retornar a hora",0)
 
-            return self.message
 
+    # Criando apenas para limpar a tela
     def bot_clear(self):
         
         try:
@@ -72,36 +67,57 @@ class Bot():
                 
         except Exception as error:
 
-            self.message = {
-                "MessageError": "Erro ao limpar a tela, não foi possível identificar o sistema a ser utilizado",
-                "error": error
-            }    
-
-            return self.message
+            self.setMessage("Erro ao limpar a tela, não foi possível identificar o sistema a ser utilizado", 0)
 
     # Responsável por organizar o receber as publicações antes de serem publicadas
-    def publication_waiting(self, data):
+    def publication_waiting(self):
 
         try:
-
+        
             sql = self.connection.cursor()
-            
+            sql.charset = "utf8"
             dateNow = self.return_hours()
-
-            query = "INSERT INTO publication_not_published( news, link, created_time ) VALUES ( %s, %s, %s )"
             
-            values = (data['title'], data['link'], dateNow)
-
+            query = "INSERT INTO publication_not_published( news, link, created_time ) VALUES ( %s, %s, now() )"
+            
+            values = (self.data['title'], self.data['link'])
+            
             sql.execute(query, values)
 
             self.connection.commit()
             
+            sql.close()
+
+            self.setMessage("A noticia foi adicionada a lista de espera com sucesso.", 2)
+        # Segundo caso, outro erro desconhecido surja no meio da execução
         except Exception as error:
             
-            return {
-                "messageError": error
-            }
+            self.setMessage(error, 3)
 
+    def get_data(self):
+        
+        try: 
+    
+            sql = self.connection.cursor()
+            
+            query = "SELECT news, link from publication"
+
+            sql.execute(query)
+
+            self.data = sql.fetchall()
+            
+            if(len(self.data) > 0):
+                self.setMessage("Dados encontrados e retornados para o cliente.", 2)
+            else:
+                self.setMessage("Não foram encontrados dados na lista de espera.", 0)
+
+            return self.data
+            sql.close()
+
+        # Segundo caso, outro erro desconhecido surja no meio da execução
+        except Exception as error:
+            
+            self.setMessage(error, 3)
 
     # Função responsável por deletar os itens das tabelas
     def delete_publications(self, id):
@@ -115,60 +131,58 @@ class Bot():
 
             self.connection.commit()
 
+            sql.close()
+
+            self.setMessage("Dado removido com sucesso da lista de espera.", 2)
+
+        # Segundo caso, outro erro desconhecido surja no meio da execução
         except Exception as error:
-            
-            return {
-                "messageError": error
-            }
+                
+            self.setMessage(error, 3)
+
     # É a função responsável por enviar os dados para a tabela
-    def success_connection_mysql(self, data):
+    def success_connection_mysql(self):
         try:
 
             sql = self.connection.cursor() 
-
+            sql.charset = "utf8"
             dateNow = self.return_hours() 
     
-            query = "INSERT INTO publication ( news, link, id_publication, created_time ) VALUES ( %s, %s, %s, %s )"
-            
-            values = (data['title'], data['link'], data['id'], dateNow)
+            query = "INSERT INTO publication (news, link, id_publication, created_time ) VALUES ( '{0}', '{1}', '{2}', now() )".format(self.data['title'], self.data['link'], self.data['id'])
 
-            sql.execute(query, values)
+            sql.execute(query)
 
             self.connection.commit()
 
+            sql.close()
+
+            self.setMessage("A noticia foi adicionada com sucesso a lista de noticias publicadas", 2)
+        # Segundo caso, outro erro desconhecido surja no meio da execução
         except Exception as error:
-
-            return {
-                "messageError": error
-            }
-
+            
+            self.setMessage(error, 3)
     # Função responsável por reaizar a publicação atráves do token de acesso com o facebook developed
 
-    def publication(self, news):
+    def publication(self):
         try:        
-            if((news['title'] and news['link']) != ""):
+            if((self.self.data['title'] and self.data['link']) != ""):
                 
                 graph = facebook.GraphAPI(self.token)
-                messageReturn = graph.put_object(parent_object=self.page, connection_name='feed', message=news['title'], link=news['link'])
+                messageReturn = graph.put_object(parent_object=self.page, connection_name='feed', message=self.data['title'], link=self.data['link'])
                 
-                self.link = news['link']
+                self.link = self.data['link']
 
-                news['id'] = messageReturn['id']
+                self.data['id'] = messageReturn['id']
 
-                self.message = {
-                    "id_publication": messageReturn['id'],
-                    "MessageSuccess": "Postagem realizada com sucesso"
-                }
+                self.success_connection_mysql()
 
-                self.success_connection_mysql(news)
+                self.message("Postagem realizada com sucesso", 2)
+                
 
+        # Segundo caso, outro erro desconhecido surja no meio da execução
         except Exception as error:
-
-            self.message = {
-                "MessageError": error
-            }
-
-            return self.message
+            
+            self.setMessage(error, 1)
 
     # Responsável por extrair os dados como link, text, etc do link passado
     def extract_info(self, url):
@@ -195,32 +209,44 @@ class Bot():
                         self.info.append(info_extrated)
                     else:
                         pass
-                
-                
-                self.publication(info_extrated)
+
+                self.data = info_extrated
+
+                #self.publication(info_extrated)
+                self.setMessage("As informações foram extraidas com sucesso da url.", 2)
 
             else:
 
-                self.message = {
-                    "MessageError": "Not url found"
-                }
-                return self.message
+                self.setMessage("Not url found", 0)
 
         # Casos em que o bot irá retornar um erro para o código MAIN
 
         # Primeiro caso: Caso seja interrompido no meio do processo
         except KeyboardInterrupt:
 
-            self.message = {
-                "MessageError": 'You stoped this program'
-            }
-
-            return self.massage
+            self.message('You stoped this program', 3)
 
         # Segundo caso, outro erro desconhecido surja no meio da execução
         except Exception as error:
-            self.message = {
-                "MessageError": error
-            }
+            
+            self.setMessage(error, 3)
 
-            return self.message
+    def getMessage(self):
+
+        return self.message
+
+    def setMessage(self, message, status):
+        
+        data = {
+            "message": message,
+            "status": status
+        }
+
+        self.message.append(data)
+
+    # Códigos de message
+    #
+    #  0 - erro de funções básicas 
+    #  1 - Erro de api
+    #  2 - Mensagens de successo
+    #  3 - Erro no servidor mysql
