@@ -33,7 +33,7 @@ class Bot():
         self.data = ""
         self.message = []
         self.page = '908493739185235'
-        self.token = 'EAALVbVPZCmzUBAPk3xo2ZCEP1C2b4u2ykismIwOcja1tTFeVzQPhgGkSNQlA7s0kT02rZATWp9ydQ1m89nAtcJdKSiXLXtY0PTawARjFgDUPJkiptObAj8MLWnmrmInQKQjYle8lRGIBAdASlZB5ZAG8GBFt15V7i0ewFqGdpW50dy0gUXURkubsFvNDHAojWZBsOnGYzhmwZDZD'
+        self.token = 'EAALVbVPZCmzUBAMCQ4fZBvbX6IsDuiP8nJDSRJjxvuXNyNlcMb8oPTUxPpVZBmR0DdpntzMFD9ZCZCWyFsYQ3U3pwJbQYGI3N8dxfFnRlb4v79EdEHa9BQfVbS3aqIXKcpAt7RbOj0vSluxLjHBwzogM3shSofW5xlB53CUGXNQZDZD'
         self.connection = mysql.connector.connect(host='localhost', user='root', password='Leontechh@15', database='bot_python') 
 
     # Reponsável por retornar a data e hora
@@ -41,7 +41,7 @@ class Bot():
         try:
             dateNow = datetime.now()
             
-            dateNow = dateNow.strftime("%d/%m/%Y %H:%M")
+            dateNow = dateNow.strftime("%d/%m/%Y %H:%M:%S")
 
             return dateNow
 
@@ -94,25 +94,26 @@ class Bot():
             
             self.setMessage(error, 3)
 
-    def get_data(self):
+    def get_data(self, table = "publication"):
         
         try: 
     
             sql = self.connection.cursor()
             
-            query = "SELECT news, link from publication"
+            query = "SELECT id, news, link from {0}".format(table)
 
             sql.execute(query)
 
             self.data = sql.fetchall()
             
             if(len(self.data) > 0):
-                self.setMessage("Dados encontrados e retornados para o cliente.", 2)
+                self.setMessage("Dados encontrados na lista: '{0}' e retornados para o cliente.".format(table), 2)
             else:
-                self.setMessage("Não foram encontrados dados na lista de espera.", 0)
+                self.setMessage("Não foram encontrados dados na lista de espera: '{0}'.".format(table), 0)
 
-            return self.data
             sql.close()
+            
+            return self.data
 
         # Segundo caso, outro erro desconhecido surja no meio da execução
         except Exception as error:
@@ -122,24 +123,26 @@ class Bot():
     # Função responsável por deletar os itens das tabelas
     def delete_publications(self, id):
         try: 
-    
-            sql = self.connection.cursor()
+            if(id > 0):
+                sql = self.connection.cursor()
 
-            query = "DELETE FROM publication_not_published where id = ( %s )"
+                query = "DELETE FROM publication_not_published where id = ( {0} )".format(id)
 
-            sql.execute(query, id)
+                sql.execute(query)
+                
+                self.connection.commit()
 
-            self.connection.commit()
+                sql.close()
 
-            sql.close()
-
-            self.setMessage("Dado removido com sucesso da lista de espera.", 2)
+                self.setMessage("Dado removido com sucesso da lista de espera.", 2)
+            else:
+                self.setMessage("Não foi identificado nenhum dado na lista de espera.", 3)
 
         # Segundo caso, outro erro desconhecido surja no meio da execução
         except Exception as error:
                 
             self.setMessage(error, 3)
-
+            
     # É a função responsável por enviar os dados para a tabela
     def success_connection_mysql(self):
         try:
@@ -165,20 +168,18 @@ class Bot():
 
     def publication(self):
         try:        
-            if((self.self.data['title'] and self.data['link']) != ""):
-                
+            if((self.data['title'] and self.data['link']) != ""):
+
                 graph = facebook.GraphAPI(self.token)
                 messageReturn = graph.put_object(parent_object=self.page, connection_name='feed', message=self.data['title'], link=self.data['link'])
                 
+                print(messageReturn)
                 self.link = self.data['link']
 
                 self.data['id'] = messageReturn['id']
 
-                self.success_connection_mysql()
-
                 self.message("Postagem realizada com sucesso", 2)
                 
-
         # Segundo caso, outro erro desconhecido surja no meio da execução
         except Exception as error:
             
@@ -209,7 +210,7 @@ class Bot():
                         self.info.append(info_extrated)
                     else:
                         pass
-
+                        
                 self.data = info_extrated
 
                 #self.publication(info_extrated)
@@ -232,8 +233,17 @@ class Bot():
             self.setMessage(error, 3)
 
     def getMessage(self):
+        
+        data = self.message
+        
+        for value in data:
+            
+            if(value['status'] == 2):
+                print(" \033[0;0m* [\033[1;32m{0}\033[0;0m] -> {1}".format(value['status'], value['message']))
+            else:
+                print(" * [\033[1;31m{0}\033[0;0m] -> {1}".format(value['status'], value['message']))
 
-        return self.message
+        self.message = []
 
     def setMessage(self, message, status):
         
@@ -250,3 +260,12 @@ class Bot():
     #  1 - Erro de api
     #  2 - Mensagens de successo
     #  3 - Erro no servidor mysql
+
+    def setData(self, message, link):
+
+        self.data = {
+            'title': message,
+            'link': link
+        }
+
+        self.setMessage('Dado setados para a váriavel responsável pela publicação pela API e inserção no DataBase. ', 2)
