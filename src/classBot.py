@@ -33,7 +33,7 @@ class Bot():
         self.data = ""
         self.message = []
         self.page = '908493739185235'
-        self.token = 'EAALVbVPZCmzUBAMCQ4fZBvbX6IsDuiP8nJDSRJjxvuXNyNlcMb8oPTUxPpVZBmR0DdpntzMFD9ZCZCWyFsYQ3U3pwJbQYGI3N8dxfFnRlb4v79EdEHa9BQfVbS3aqIXKcpAt7RbOj0vSluxLjHBwzogM3shSofW5xlB53CUGXNQZDZD'
+        self.token = ''
         self.connection = mysql.connector.connect(host='localhost', user='root', password='Leontechh@15', database='bot_python') 
 
     # Reponsável por retornar a data e hora
