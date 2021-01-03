@@ -2,31 +2,36 @@
 # Importando os modulos / Bot
 
 from src.classBot import Bot 
-from function_extra import receive_hours, verify_hours, sleep_pause, banner, message_bot
+from function_extra import receive_hours, verify_hours, sleep_pause, banner
 import time, sys
 
 bot = Bot()
 
 if __name__ == '__main__':    
+    bot.bot_clear()
     try:
-        while 1:
+        banner(bot)
 
+        print("\n\n\t\033[1;33mLogs do bot\033[1;31m:\033[0;0m\n\n")
+        while 1:
+            
             if( verify_hours(bot) == False):
-                bot.bot_clear()
-                print("""
-                    \n\n\t\t\t\033[1;31m[\033[1;33m!\033[1;31m] \033[1;33mPrograma está em fase de desenvolvimento ainda, por favor aguarde
-                    \t\t         até o lançamento final do produto\033[1;31m!
-                """)
                 sleep_pause()
                 
             else:
-                banner(bot)
+
+                data = bot.get_data("publication_not_published")
+
+                if(len(data) > 0):    
+                    bot.setData(data[0][1], data[0][2])
+                    
+                    bot.delete_publications(data[0][0])
+    
+                bot.publication()
+
+                bot.success_connection_mysql()
                 
-                bot.extract_info("https://www.theenemy.com.br/pc/respawn-nova-ip-titanfall-apex-legends")
-                
-                datas = bot.get_data()
-                
-                message_bot(bot)
+            bot.getMessage()
             
     except KeyboardInterrupt: 
 
