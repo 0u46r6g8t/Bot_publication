@@ -21,7 +21,7 @@ mccabe==0.6.1
 mysql-connector==2.2.9
 mysql-connector-python==8.0.22
 pep8==1.7.1
-protobuf==3.14.0
+protobuf==3.18.3
 pycodestyle==2.6.0
 pylint==2.6.0
 requests==2.24.0
